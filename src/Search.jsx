@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Iframe from 'react-iframe';
 import $ from 'jquery';
 
 export default class Search extends Component{
@@ -7,6 +8,7 @@ export default class Search extends Component{
     this.state = {
     result: null,
     query: null,
+    embeddedUrl: null,
     }
     this.handleInput = this.handleInput.bind(this);  
     this.prepareYTLink = this.prepareYTLink.bind(this);
@@ -14,16 +16,23 @@ export default class Search extends Component{
    }
     prepareYTLink (str) {
         var result = 'https://youtube.com/watch?v=' + str;
+        var embedUrl = "http://www.youtube.com/embed/"+str+"?&start=3";
         this.setState({
             result: result,
+            embeddedUrl: embedUrl,
         })
-        console.log(`result is ${this.state.result}`)
+        console.log(`result in state is ${this.state.result}`)
+        console.log(`result in method is ${result}`)
+        console.log(`firstLink in method is ${str}`)
         return;
         };
 
-    ajaxCall(){
+   async ajaxCall(){
         // var query = 'super+star+theme+music';
-        var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&key=AIzaSyAwk7P3ZnNLiXx7xHq9sxnEQhPAWmFyrfU&q="+this.state.query;
+        //aju
+        // var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&key=AIzaSyAwk7P3ZnNLiXx7xHq9sxnEQhPAWmFyrfU&q="+this.state.query;
+        //ife
+        var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&key=AIzaSyAnVzAChBHO3fZmPLbNvIUoqwUd3IP3PQk&q="+this.state.query;
         $.ajax({
         // url: "http://apply.lloydsbank.co.uk/sales-savings-api/application/version",
         url: url,
@@ -38,19 +47,41 @@ export default class Search extends Component{
         },
         dataType: "JSON"
         }).done(response =>{ 
-        var body = JSON.stringify(response);
-        console.log(body);
-        var firstVideo = response.items[0].id.videoId;
+        // var body = JSON.stringify(response);
+        console.log('response fetched');
+        var firstVideo;
+        for(var i=0;i < response.items.length; i++ ){
+            console.log(`i value is ${i}`);
+            if(response.items[i].id.kind.includes('video')){
+                firstVideo = response.items[i].id.videoId;
+                console.log(`i value inside is ${i}`);
+                break;
+            }
+        } 
+        console.log(`first video value is ${firstVideo}`);
+        if(typeof firstVideo !== 'undefined'){
         this.prepareYTLink(firstVideo)
-        });
         // window.open(this.state.result);
+        this.setState({
+            query : '',
+        });
+        }
+        });
+        console.log(new Date());
+        setTimeout(this.doNothing(), 1000);
         
+        
+    }
+
+    doNothing(){
+        console.log(new Date());
     }
 
     handleInput(event) {
         this.setState({
             query: event.target.value
         });
+        
       }
 
 
@@ -63,7 +94,6 @@ export default class Search extends Component{
         target="_blank"
         rel="noopener noreferrer"
         >
-        
         I'm feeling lucky on YouTube
         </a>
 
@@ -71,23 +101,33 @@ export default class Search extends Component{
         <br/>
         <form autoComplete="off">
         <label>
-            <input type="text" onChange={this.handleInput}/>
+            <input 
+            type="text"
+            onChange={this.handleInput} 
+            style={{width: "250px"}} 
+            placeholder="Search">
+            </input>
             <br/>
             
         </label>
         </form>
         <br/>
-        <button onClick={() => this.ajaxCall()}>Play the first result from Youtube</button>
+        <button onClick={() => this.ajaxCall()} color="#841584">Play the first result from Youtube</button>
         <br/>
-        <a
-        className="App-link"
-        href={this.state.result}
-        target="_blank"
-        rel="noopener noreferrer"
-        >
-        
-        watch video
-        </a>
+        <br/>
+        <br/>
+        {this.state.result !== null ?
+        (
+        <Iframe url={this.state.embeddedUrl}
+        width="850px"
+        height="450px"
+        id="myId"
+        className="myClassname"
+        display="initial"
+        position="relative"
+        allow="autoplay; encrypted-media"
+        allowFullScreen/>
+        ) : null }
         </div>
         )
     }
